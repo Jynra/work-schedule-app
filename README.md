@@ -27,8 +27,8 @@ Une application Flutter moderne pour gérer et visualiser vos plannings de trava
 
 1. **Cloner le repository**
 ```bash
-git clone https://github.com/Jynra/work_schedule_app.git
-cd work_schedule_app
+git clone https://github.com/Jynra/work-schedule-app.git
+cd work-schedule-app
 ```
 
 2. **Installer les dépendances**
@@ -60,126 +60,136 @@ date,horaire,poste,taches
 
 ## 🛠️ Technologies utilisées
 
-- **Flutter** - Framework UI
+- **Flutter** - Framework UI multiplateforme
 - **Dart** - Langage de programmation
-- **Material Design 3** - Interface utilisateur
+- **Material Design 3** - Interface utilisateur moderne
 - **file_picker** - Sélection de fichiers
-- **intl** - Internationalisation
+- **intl** - Internationalisation et dates
+- **flutter_launcher_icons** - Génération d'icônes
 
-## 🔧 Structure du projet
-
-```
-lib/
-├── main.dart           # Point d'entrée de l'application
-├── models/             # Modèles de données
-└── widgets/            # Widgets personnalisés
-```
-## Strcuture actuel du projet
+## 🏗️ Architecture du projet
 
 ```
-work-schedule-app
-├── analysis_options.yaml
-├── android
-│   ├── app
-│   │   ├── build.gradle.kts
-│   │   └── src
-│   │       ├── debug
-│   │       │   └── AndroidManifest.xml
-│   │       ├── main
-│   │       │   ├── AndroidManifest.xml
-│   │       │   ├── kotlin
-│   │       │   │   └── com
-│   │       │   │       └── example
-│   │       │   │           └── work_schedule_app
-│   │       │   │               └── MainActivity.kt
-│   │       │   └── res
-│   │       │       ├── drawable
-│   │       │       │   └── launch_background.xml
-│   │       │       ├── drawable-v21
-│   │       │       │   └── launch_background.xml
-│   │       │       ├── mipmap-hdpi
-│   │       │       │   └── ic_launcher.png
-│   │       │       ├── mipmap-mdpi
-│   │       │       │   └── ic_launcher.png
-│   │       │       ├── mipmap-xhdpi
-│   │       │       │   └── ic_launcher.png
-│   │       │       ├── mipmap-xxhdpi
-│   │       │       │   └── ic_launcher.png
-│   │       │       ├── mipmap-xxxhdpi
-│   │       │       │   └── ic_launcher.png
-│   │       │       ├── values
-│   │       │       │   └── styles.xml
-│   │       │       └── values-night
-│   │       │           └── styles.xml
-│   │       └── profile
-│   │           └── AndroidManifest.xml
-│   ├── build.gradle.kts
-│   ├── gradle
-│   │   └── wrapper
-│   │       └── gradle-wrapper.properties
-│   ├── gradle.properties
-│   └── settings.gradle.kts
-├── ios
-│   ├── Flutter
-│   │   ├── AppFrameworkInfo.plist
-│   │   ├── Debug.xcconfig
-│   │   └── Release.xcconfig
-│   ├── Runner
-│   │   ├── AppDelegate.swift
-│   │   ├── Assets.xcassets
-│   │   │   ├── AppIcon.appiconset
-│   │   │   │   ├── Contents.json
-│   │   │   │   ├── Icon-App-1024x1024@1x.png
-│   │   │   │   ├── Icon-App-20x20@1x.png
-│   │   │   │   ├── Icon-App-20x20@2x.png
-│   │   │   │   ├── Icon-App-20x20@3x.png
-│   │   │   │   ├── Icon-App-29x29@1x.png
-│   │   │   │   ├── Icon-App-29x29@2x.png
-│   │   │   │   ├── Icon-App-29x29@3x.png
-│   │   │   │   ├── Icon-App-40x40@1x.png
-│   │   │   │   ├── Icon-App-40x40@2x.png
-│   │   │   │   ├── Icon-App-40x40@3x.png
-│   │   │   │   ├── Icon-App-60x60@2x.png
-│   │   │   │   ├── Icon-App-60x60@3x.png
-│   │   │   │   ├── Icon-App-76x76@1x.png
-│   │   │   │   ├── Icon-App-76x76@2x.png
-│   │   │   │   └── Icon-App-83.5x83.5@2x.png
-│   │   │   └── LaunchImage.imageset
-│   │   │       ├── Contents.json
-│   │   │       ├── LaunchImage@2x.png
-│   │   │       ├── LaunchImage@3x.png
-│   │   │       ├── LaunchImage.png
-│   │   │       └── README.md
-│   │   ├── Base.lproj
-│   │   │   ├── LaunchScreen.storyboard
-│   │   │   └── Main.storyboard
-│   │   ├── Info.plist
-│   │   └── Runner-Bridging-Header.h
-│   ├── RunnerTests
-│   │   └── RunnerTests.swift
-│   ├── Runner.xcodeproj
-│   │   ├── project.pbxproj
-│   │   ├── project.xcworkspace
-│   │   │   ├── contents.xcworkspacedata
-│   │   │   └── xcshareddata
-│   │   │       ├── IDEWorkspaceChecks.plist
-│   │   │       └── WorkspaceSettings.xcsettings
-│   │   └── xcshareddata
-│   │       └── xcschemes
-│   │           └── Runner.xcscheme
-│   └── Runner.xcworkspace
-│       ├── contents.xcworkspacedata
-│       └── xcshareddata
-│           ├── IDEWorkspaceChecks.plist
-│           └── WorkspaceSettings.xcsettings
-├── lib
-│   └── main.dart
-├── pubspec.lock
-├── pubspec.yaml
-├── README.md
-└── test
-    └── widget_test.dart
+work-schedule-app/
+├── android/                    # Configuration Android
+├── ios/                        # Configuration iOS
+├── lib/
+│   └── main.dart              # Code principal de l'application
+├── test/                      # Tests unitaires
+├── assets/                    # Ressources (icônes, images)
+├── pubspec.yaml              # Dépendances et configuration
+└── README.md                 # Documentation
 ```
+
+### Structure du code
+- **WorkScheduleApp** : Widget principal de l'application
+- **WorkScheduleHomePage** : Page d'accueil avec navigation
+- **WorkEvent** : Modèle de données pour les événements
+- **Parser CSV** : Logique d'import et traitement des fichiers
+
+## 🎯 Fonctionnalités détaillées
+
+### Import CSV
+- Parsing automatique des fichiers CSV
+- Support des différents encodages
+- Validation des données
+- Messages d'erreur informatifs
+
+### Interface utilisateur
+- Design Material 3 moderne
+- Animations fluides
+- Navigation intuitive
+- Responsive design
+
+### Gestion des semaines
+- Détection automatique de la semaine courante
+- Navigation entre semaines
+- Affichage du lundi au dimanche
+- Indicateur "Aujourd'hui"
+
+## 🚀 Fonctionnalités à venir
+
+- [ ] Export des plannings modifiés
+- [ ] Édition des événements dans l'app
+- [ ] Notifications pour les événements
+- [ ] Thème sombre
+- [ ] Synchronisation cloud
+- [ ] Support multi-langues
+- [ ] Statistiques de travail
+
+## 🧪 Tests
+
+```bash
+# Lancer les tests
+flutter test
+
+# Analyser le code
+flutter analyze
+```
+
+## 📦 Build de production
+
+### Android APK
+```bash
+flutter build apk --release
+```
+
+### Android App Bundle (Play Store)
+```bash
+flutter build appbundle --release
+```
+
+### iOS (macOS requis)
+```bash
+flutter build ios --release
+```
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues ! Pour contribuer :
+
+1. Fork le projet
+2. Créez votre branche (`git checkout -b feature/amazing-feature`)
+3. Commit vos changements (`git commit -m 'Add amazing feature'`)
+4. Push vers la branche (`git push origin feature/amazing-feature`)
+5. Ouvrez une Pull Request
+
+### Lignes directrices
+- Suivez les conventions de code Dart
+- Ajoutez des tests pour les nouvelles fonctionnalités
+- Mettez à jour la documentation si nécessaire
+
+## 🐛 Signaler un bug
+
+Si vous trouvez un bug, n'hésitez pas à [ouvrir une issue](https://github.com/Jynra/work-schedule-app/issues) avec :
+- Description détaillée du problème
+- Étapes pour reproduire
+- Captures d'écran si applicable
+- Informations sur l'environnement (OS, version Flutter, etc.)
+
+## 📄 Licence
+
+Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+## 🙏 Remerciements
+
+- [Flutter team](https://flutter.dev/) pour le framework extraordinaire
+- [Material Design](https://material.io/) pour les guidelines UI
+- Communauté Flutter pour les packages et le support
+- Contributeurs et utilisateurs de ce projet
+
+## 📊 Statistiques du projet
+
+![GitHub stars](https://img.shields.io/github/stars/Jynra/work-schedule-app?style=social)
+![GitHub forks](https://img.shields.io/github/forks/Jynra/work-schedule-app?style=social)
+![GitHub issues](https://img.shields.io/github/issues/Jynra/work-schedule-app)
+![GitHub license](https://img.shields.io/github/license/Jynra/work-schedule-app)
+
+---
+
+Développé avec ❤️ en Flutter par [Jynra](https://github.com/Jynra)
+
+*Une application simple mais puissante pour gérer vos plannings de travail au quotidien.*
 
 ## 🚀 Fonctionnalités à venir
 
