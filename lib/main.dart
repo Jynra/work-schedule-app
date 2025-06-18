@@ -37,6 +37,7 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
   List<WorkEvent> scheduleData = [];
   List<List<WorkEvent>> weeks = [];
   int currentWeek = 0;
+  int todayWeek = 0; // Index de la semaine contenant aujourd'hui
   DateTime currentDate = DateTime.now();
 
   @override
@@ -105,8 +106,22 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
       print("Week $i: ${weeks[i].length} events");
     }
 
-    // Trouver la semaine courante
+    // Trouver la semaine courante (aujourd'hui)
+    _findTodayWeek();
+
+    print("Current week set to: $currentWeek");
+    print("Today week set to: $todayWeek");
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _findTodayWeek() {
     DateTime today = DateTime.now();
+    todayWeek = 0; // Par défaut, première semaine
+    currentWeek = 0;
+
     for (int i = 0; i < weeks.length; i++) {
       if (weeks[i].any((event) {
         DateTime eventDate = DateTime.parse(event.date);
@@ -115,16 +130,17 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
         return today.isAfter(weekStart.subtract(const Duration(days: 1))) &&
             today.isBefore(weekEnd.add(const Duration(days: 1)));
       })) {
+        todayWeek = i;
         currentWeek = i;
         break;
       }
     }
+  }
 
-    print("Current week set to: $currentWeek");
-
-    if (mounted) {
-      setState(() {});
-    }
+  void _goToToday() {
+    setState(() {
+      currentWeek = todayWeek;
+    });
   }
 
   DateTime _getWeekStart(DateTime date) {
@@ -258,16 +274,38 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Bouton import CSV
-                    ElevatedButton.icon(
-                      onPressed: _pickAndLoadCSV,
-                      icon: const Icon(Icons.upload_file),
-                      label: const Text('Importer CSV'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue[100],
-                        foregroundColor: Colors.blue[700],
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      ),
+                    // Boutons d'actions
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Bouton import CSV
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _pickAndLoadCSV,
+                            icon: const Icon(Icons.upload_file, size: 18),
+                            label: const Text('Importer CSV'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[100],
+                              foregroundColor: Colors.blue[700],
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        // Bouton Aujourd'hui
+                        ElevatedButton.icon(
+                          onPressed: weeks.isNotEmpty && currentWeek != todayWeek ? _goToToday : null,
+                          icon: const Icon(Icons.today, size: 18),
+                          label: const Text("Aujourd'hui"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: currentWeek == todayWeek ? Colors.grey[300] : Colors.orange[100],
+                            foregroundColor: currentWeek == todayWeek ? Colors.grey[600] : Colors.orange[700],
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: 16),
@@ -291,7 +329,30 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
 
                         Column(
                           children: [
-                            const Text('Semaine', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('Semaine', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                if (currentWeek == todayWeek) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green[100],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      'Actuelle',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.green[700],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                             Text(
                               weeks.isNotEmpty && currentWeek < weeks.length
                                   ? _getWeekRange(weeks[currentWeek])
