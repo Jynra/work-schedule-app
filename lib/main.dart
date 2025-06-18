@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +45,60 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
   @override
   void initState() {
     super.initState();
-    _loadSampleData();
+    _loadSavedData();
+  }
+
+  // Charger les données sauvegardées ou les données d'exemple
+  Future<void> _loadSavedData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedData = prefs.getString('schedule_data');
+
+      if (savedData != null && savedData.isNotEmpty) {
+        // Charger les données sauvegardées
+        List<dynamic> jsonData = json.decode(savedData);
+        List<WorkEvent> loadedEvents = jsonData.map((item) =>
+            WorkEvent.fromJson(item as Map<String, dynamic>)
+        ).toList();
+
+        setState(() {
+          scheduleData = loadedEvents;
+          _organizeWeeks();
+        });
+
+        print("Loaded ${loadedEvents.length} events from saved data");
+      } else {
+        // Charger les données d'exemple si aucune donnée sauvegardée
+        _loadSampleData();
+      }
+    } catch (e) {
+      print("Error loading saved data: $e");
+      // En cas d'erreur, charger les données d'exemple
+      _loadSampleData();
+    }
+  }
+
+  // Sauvegarder les données
+  Future<void> _saveData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      List<Map<String, dynamic>> jsonData = scheduleData.map((event) => event.toJson()).toList();
+      await prefs.setString('schedule_data', json.encode(jsonData));
+      print("Saved ${scheduleData.length} events to storage");
+    } catch (e) {
+      print("Error saving data: $e");
+    }
+  }
+
+  // Effacer les données sauvegardées
+  Future<void> _clearSavedData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('schedule_data');
+      print("Cleared saved data");
+    } catch (e) {
+      print("Error clearing saved data: $e");
+    }
   }
 
   void _loadSampleData() {
@@ -143,6 +198,41 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
     });
   }
 
+  // Dialogue de confirmation pour réinitialiser
+  void _showResetDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Réinitialiser le planning'),
+          content: const Text(
+            'Voulez-vous effacer le planning actuel et revenir aux données d\'exemple ?\n\nCette action est irréversible.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _clearSavedData();
+                _loadSampleData();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Planning réinitialisé avec les données d\'exemple')),
+                  );
+                }
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Réinitialiser'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   DateTime _getWeekStart(DateTime date) {
     int weekday = date.weekday;
     return date.subtract(Duration(days: weekday - 1));
@@ -210,6 +300,9 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
           scheduleData = events;
           _organizeWeeks();
         });
+
+        // Sauvegarder automatiquement les nouvelles données
+        await _saveData();
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -292,19 +385,35 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                           ),
                         ),
 
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
 
                         // Bouton Aujourd'hui
-                        ElevatedButton.icon(
-                          onPressed: weeks.isNotEmpty && currentWeek != todayWeek ? _goToToday : null,
-                          icon: const Icon(Icons.today, size: 18),
-                          label: const Text("Aujourd'hui"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: currentWeek == todayWeek ? Colors.grey[300] : Colors.orange[100],
-                            foregroundColor: currentWeek == todayWeek ? Colors.grey[600] : Colors.orange[700],
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: weeks.isNotEmpty && currentWeek != todayWeek ? _goToToday : null,
+                            icon: const Icon(Icons.today, size: 18),
+                            label: const Text("Aujourd'hui"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: currentWeek == todayWeek ? Colors.grey[300] : Colors.orange[100],
+                              foregroundColor: currentWeek == todayWeek ? Colors.grey[600] : Colors.orange[700],
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            ),
                           ),
                         ),
+
+                        const SizedBox(width: 8),
+
+                        // Bouton reset (afficher seulement s'il y a des données sauvegardées)
+                        if (scheduleData.isNotEmpty)
+                          IconButton(
+                            onPressed: () => _showResetDialog(),
+                            icon: const Icon(Icons.refresh, size: 20),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.red[100],
+                              foregroundColor: Colors.red[700],
+                            ),
+                            tooltip: 'Réinitialiser',
+                          ),
                       ],
                     ),
 
@@ -404,13 +513,22 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                 ),
               ),
 
-              // Footer
+              // Footer avec informations
               if (weeks.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'Semaine ${currentWeek + 1} sur ${weeks.length}',
-                    style: TextStyle(color: Colors.grey[600]),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Semaine ${currentWeek + 1} sur ${weeks.length}',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      if (scheduleData.isNotEmpty)
+                        Text(
+                          '${scheduleData.length} événements chargés',
+                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        ),
+                    ],
                   ),
                 ),
             ],
@@ -532,4 +650,24 @@ class WorkEvent {
   final String taches;
 
   WorkEvent(this.date, this.horaire, this.poste, this.taches);
+
+  // Conversion vers JSON pour la sauvegarde
+  Map<String, dynamic> toJson() {
+    return {
+      'date': date,
+      'horaire': horaire,
+      'poste': poste,
+      'taches': taches,
+    };
+  }
+
+  // Création depuis JSON pour le chargement
+  factory WorkEvent.fromJson(Map<String, dynamic> json) {
+    return WorkEvent(
+      json['date'] as String,
+      json['horaire'] as String,
+      json['poste'] as String,
+      json['taches'] as String,
+    );
+  }
 }
