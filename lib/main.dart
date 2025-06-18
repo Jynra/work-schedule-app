@@ -12,24 +12,84 @@ void main() async {
   runApp(const WorkScheduleApp());
 }
 
-class WorkScheduleApp extends StatelessWidget {
+class WorkScheduleApp extends StatefulWidget {
   const WorkScheduleApp({super.key});
+
+  @override
+  State<WorkScheduleApp> createState() => _WorkScheduleAppState();
+}
+
+class _WorkScheduleAppState extends State<WorkScheduleApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThemeMode();
+  }
+
+  // Charger le mode thème sauvegardé
+  Future<void> _loadThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isDark = prefs.getBool('is_dark_mode') ?? false;
+    setState(() {
+      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  // Sauvegarder le mode thème
+  Future<void> _saveThemeMode(bool isDark) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_dark_mode', isDark);
+  }
+
+  // Basculer entre mode clair et sombre
+  void _toggleTheme() {
+    final isDark = _themeMode == ThemeMode.dark;
+    setState(() {
+      _themeMode = isDark ? ThemeMode.light : ThemeMode.dark;
+    });
+    _saveThemeMode(!isDark);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Planning de Travail',
+      debugShowCheckedModeBanner: false,
+      themeMode: _themeMode,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.grey[50],
+        cardColor: Colors.white,
       ),
-      home: const WorkScheduleHomePage(),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.grey[900],
+        cardColor: Colors.grey[800],
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.grey[850],
+          foregroundColor: Colors.white,
+        ),
+      ),
+      home: WorkScheduleHomePage(onThemeToggle: _toggleTheme, isDarkMode: _themeMode == ThemeMode.dark),
     );
   }
 }
 
 class WorkScheduleHomePage extends StatefulWidget {
-  const WorkScheduleHomePage({super.key});
+  final VoidCallback onThemeToggle;
+  final bool isDarkMode;
+
+  const WorkScheduleHomePage({
+    super.key,
+    required this.onThemeToggle,
+    required this.isDarkMode,
+  });
 
   @override
   State<WorkScheduleHomePage> createState() => _WorkScheduleHomePageState();
@@ -39,7 +99,7 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
   List<WorkEvent> scheduleData = [];
   List<List<WorkEvent>> weeks = [];
   int currentWeek = 0;
-  int todayWeek = 0; // Index de la semaine contenant aujourd'hui
+  int todayWeek = 0;
   DateTime currentDate = DateTime.now();
 
   @override
@@ -55,7 +115,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
       final savedData = prefs.getString('schedule_data');
 
       if (savedData != null && savedData.isNotEmpty) {
-        // Charger les données sauvegardées
         List<dynamic> jsonData = json.decode(savedData);
         List<WorkEvent> loadedEvents = jsonData.map((item) =>
             WorkEvent.fromJson(item as Map<String, dynamic>)
@@ -68,12 +127,10 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
 
         print("Loaded ${loadedEvents.length} events from saved data");
       } else {
-        // Charger les données d'exemple si aucune donnée sauvegardée
         _loadSampleData();
       }
     } catch (e) {
       print("Error loading saved data: $e");
-      // En cas d'erreur, charger les données d'exemple
       _loadSampleData();
     }
   }
@@ -102,7 +159,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
   }
 
   void _loadSampleData() {
-    // Données d'exemple
     final sampleData = [
       WorkEvent('2025-06-16', '08:00-16:00', 'Bureau Principal', 'Réunion équipe, Rapports'),
       WorkEvent('2025-06-17', '09:00-17:00', 'Site A', 'Formation, Supervision'),
@@ -127,8 +183,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
   }
 
   void _organizeWeeks() {
-    print("_organizeWeeks called with ${scheduleData.length} events");
-
     Map<String, List<WorkEvent>> weekMap = {};
 
     for (var event in scheduleData) {
@@ -137,8 +191,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
         DateTime weekStart = _getWeekStart(date);
         String weekKey = DateFormat('yyyy-MM-dd').format(weekStart);
 
-        print("Event date: ${event.date} -> Week start: $weekStart -> Week key: $weekKey");
-
         weekMap[weekKey] ??= [];
         weekMap[weekKey]!.add(event);
       } catch (e) {
@@ -146,9 +198,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
       }
     }
 
-    print("Week map: $weekMap");
-
-    // Trier les semaines et les jours
     List<String> sortedWeeks = weekMap.keys.toList()..sort();
     weeks = sortedWeeks.map((weekKey) {
       List<WorkEvent> weekEvents = weekMap[weekKey]!;
@@ -156,16 +205,7 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
       return weekEvents;
     }).toList();
 
-    print("Organized weeks: ${weeks.length}");
-    for (int i = 0; i < weeks.length; i++) {
-      print("Week $i: ${weeks[i].length} events");
-    }
-
-    // Trouver la semaine courante (aujourd'hui)
     _findTodayWeek();
-
-    print("Current week set to: $currentWeek");
-    print("Today week set to: $todayWeek");
 
     if (mounted) {
       setState(() {});
@@ -174,7 +214,7 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
 
   void _findTodayWeek() {
     DateTime today = DateTime.now();
-    todayWeek = 0; // Par défaut, première semaine
+    todayWeek = 0;
     currentWeek = 0;
 
     for (int i = 0; i < weeks.length; i++) {
@@ -198,7 +238,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
     });
   }
 
-  // Dialogue de confirmation pour réinitialiser
   void _showResetDialog() {
     showDialog(
       context: context,
@@ -249,26 +288,15 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
         File file = File(result.files.single.path!);
         String csvContent = await file.readAsString();
 
-        print("Raw CSV Content: '$csvContent'");
-        print("CSV Content length: ${csvContent.length}");
-
-        // Normaliser les fins de ligne
         csvContent = csvContent.replaceAll('\r\n', '\n').replaceAll('\r', '\n').trim();
 
-        print("Normalized CSV: '$csvContent'");
-
-        // Parser manuel ligne par ligne
         List<String> lines = csvContent.split('\n');
-        print("Split lines: $lines");
-        print("Number of lines: ${lines.length}");
 
         if (lines.length < 2) {
           throw Exception('Fichier CSV invalide - pas assez de lignes');
         }
 
-        // En-têtes
         List<String> headers = lines[0].split(',').map((h) => h.trim().toLowerCase()).toList();
-        print("Parsed headers: $headers");
 
         List<WorkEvent> events = [];
         for (int i = 1; i < lines.length; i++) {
@@ -276,32 +304,24 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
           if (line.isEmpty) continue;
 
           List<String> values = line.split(',').map((v) => v.trim()).toList();
-          print("Line $i: '$line' -> Values: $values");
 
-          if (values.length >= 4) { // Au moins 4 colonnes attendues
+          if (values.length >= 4) {
             String date = values[0];
             String horaire = values[1];
             String poste = values[2];
             String taches = values[3];
 
-            print("Creating event: date='$date', horaire='$horaire', poste='$poste', taches='$taches'");
-
-            if (date.isNotEmpty && date != 'date') { // Éviter la ligne d'en-tête
+            if (date.isNotEmpty && date != 'date') {
               events.add(WorkEvent(date, horaire, poste, taches));
             }
-          } else {
-            print("Skipping line $i: not enough values (${values.length})");
           }
         }
-
-        print("Total events created: ${events.length}");
 
         setState(() {
           scheduleData = events;
           _organizeWeeks();
         });
 
-        // Sauvegarder automatiquement les nouvelles données
         await _saveData();
 
         if (mounted) {
@@ -311,7 +331,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
         }
       }
     } catch (e) {
-      print("Error loading CSV: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur lors du chargement: $e')),
@@ -322,13 +341,17 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = widget.isDarkMode;
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
+            colors: isDark
+                ? [const Color(0xFF1A1A1A), const Color(0xFF2D2D2D)]
+                : [const Color(0xFFE3F2FD), const Color(0xFFBBDEFB)],
           ),
         ),
         child: SafeArea(
@@ -339,11 +362,11 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? Colors.grey[850] : Colors.white,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -351,35 +374,74 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                 ),
                 child: Column(
                   children: [
-                    Text(
-                      'Planning de Travail',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
-                      ),
+                    // Titre centré avec bouton thème en coin
+                    Stack(
+                      children: [
+                        // Titre centré
+                        Center(
+                          child: Column(
+                            children: [
+                              Text(
+                                'Planning de Travail',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.white : Colors.grey[800],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                DateFormat('MMMM yyyy', 'fr_FR').format(currentDate),
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: isDark ? Colors.grey[300] : Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Bouton thème en haut à droite
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.grey[700] : Colors.grey[200],
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: IconButton(
+                              onPressed: widget.onThemeToggle,
+                              icon: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                child: Icon(
+                                  isDark ? Icons.light_mode : Icons.dark_mode,
+                                  key: ValueKey(isDark),
+                                  color: isDark ? Colors.yellow[600] : Colors.indigo[600],
+                                  size: 14,
+                                ),
+                              ),
+                              tooltip: isDark ? 'Mode clair' : 'Mode sombre',
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      DateFormat('MMMM yyyy', 'fr_FR').format(currentDate),
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                    ),
+
                     const SizedBox(height: 16),
 
                     // Boutons d'actions
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // Bouton import CSV
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: _pickAndLoadCSV,
                             icon: const Icon(Icons.upload_file, size: 18),
                             label: const Text('Importer CSV'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[100],
-                              foregroundColor: Colors.blue[700],
+                              backgroundColor: isDark ? Colors.blue[800] : Colors.blue[100],
+                              foregroundColor: isDark ? Colors.blue[200] : Colors.blue[700],
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             ),
                           ),
@@ -387,15 +449,18 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
 
                         const SizedBox(width: 8),
 
-                        // Bouton Aujourd'hui
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: weeks.isNotEmpty && currentWeek != todayWeek ? _goToToday : null,
                             icon: const Icon(Icons.today, size: 18),
                             label: const Text("Aujourd'hui"),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: currentWeek == todayWeek ? Colors.grey[300] : Colors.orange[100],
-                              foregroundColor: currentWeek == todayWeek ? Colors.grey[600] : Colors.orange[700],
+                              backgroundColor: currentWeek == todayWeek
+                                  ? (isDark ? Colors.grey[700] : Colors.grey[300])
+                                  : (isDark ? Colors.orange[800] : Colors.orange[100]),
+                              foregroundColor: currentWeek == todayWeek
+                                  ? (isDark ? Colors.grey[400] : Colors.grey[600])
+                                  : (isDark ? Colors.orange[200] : Colors.orange[700]),
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                             ),
                           ),
@@ -403,14 +468,13 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
 
                         const SizedBox(width: 8),
 
-                        // Bouton reset (afficher seulement s'il y a des données sauvegardées)
                         if (scheduleData.isNotEmpty)
                           IconButton(
                             onPressed: () => _showResetDialog(),
                             icon: const Icon(Icons.refresh, size: 20),
                             style: IconButton.styleFrom(
-                              backgroundColor: Colors.red[100],
-                              foregroundColor: Colors.red[700],
+                              backgroundColor: isDark ? Colors.red[800] : Colors.red[100],
+                              foregroundColor: isDark ? Colors.red[200] : Colors.red[700],
                             ),
                             tooltip: 'Réinitialiser',
                           ),
@@ -431,8 +495,8 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                           } : null,
                           icon: const Icon(Icons.chevron_left),
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.blue[100],
-                            foregroundColor: Colors.blue[700],
+                            backgroundColor: isDark ? Colors.blue[800] : Colors.blue[100],
+                            foregroundColor: isDark ? Colors.blue[200] : Colors.blue[700],
                           ),
                         ),
 
@@ -441,20 +505,26 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text('Semaine', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                Text(
+                                    'Semaine',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                    )
+                                ),
                                 if (currentWeek == todayWeek) ...[
                                   const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: Colors.green[100],
+                                      color: isDark ? Colors.green[800] : Colors.green[100],
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Text(
                                       'Actuelle',
                                       style: TextStyle(
                                         fontSize: 10,
-                                        color: Colors.green[700],
+                                        color: isDark ? Colors.green[200] : Colors.green[700],
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -466,7 +536,10 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                               weeks.isNotEmpty && currentWeek < weeks.length
                                   ? _getWeekRange(weeks[currentWeek])
                                   : 'Aucune donnée',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : Colors.black,
+                              ),
                             ),
                           ],
                         ),
@@ -479,8 +552,8 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                           } : null,
                           icon: const Icon(Icons.chevron_right),
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.blue[100],
-                            foregroundColor: Colors.blue[700],
+                            backgroundColor: isDark ? Colors.blue[800] : Colors.blue[100],
+                            foregroundColor: isDark ? Colors.blue[200] : Colors.blue[700],
                           ),
                         ),
                       ],
@@ -497,17 +570,27 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                   itemCount: weeks[currentWeek].length,
                   itemBuilder: (context, index) {
                     WorkEvent event = weeks[currentWeek][index];
-                    return _buildEventCard(event);
+                    return _buildEventCard(event, isDark);
                   },
                 )
-                    : const Center(
+                    : Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.calendar_today, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text('Aucune donnée disponible'),
-                      Text('Importez un fichier CSV pour commencer'),
+                      Icon(
+                        Icons.calendar_today,
+                        size: 64,
+                        color: isDark ? Colors.grey[600] : Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Aucune donnée disponible',
+                        style: TextStyle(color: isDark ? Colors.grey[300] : Colors.grey[700]),
+                      ),
+                      Text(
+                        'Importez un fichier CSV pour commencer',
+                        style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                      ),
                     ],
                   ),
                 ),
@@ -520,13 +603,16 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                   child: Column(
                     children: [
                       Text(
-                        'Semaine ${currentWeek + 1} sur ${weeks.length}',
-                        style: TextStyle(color: Colors.grey[600]),
+                        'Page ${currentWeek + 1} sur ${weeks.length}',
+                        style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
                       ),
                       if (scheduleData.isNotEmpty)
                         Text(
                           '${scheduleData.length} événements chargés',
-                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                          style: TextStyle(
+                            color: isDark ? Colors.grey[500] : Colors.grey[500],
+                            fontSize: 12,
+                          ),
                         ),
                     ],
                   ),
@@ -538,7 +624,7 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
     );
   }
 
-  Widget _buildEventCard(WorkEvent event) {
+  Widget _buildEventCard(WorkEvent event, bool isDark) {
     DateTime date = DateTime.parse(event.date);
     bool isToday = DateFormat('yyyy-MM-dd').format(DateTime.now()) == event.date;
 
@@ -546,11 +632,12 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: isDark ? Border.all(color: Colors.grey[700]!, width: 1) : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -567,18 +654,18 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                 children: [
                   Text(
                     DateFormat('EEEE', 'fr_FR').format(date),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
                   ),
                   Text(
                     '${date.day}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+                      color: isDark ? Colors.blue[300] : Colors.blue,
                     ),
                   ),
                 ],
@@ -587,13 +674,13 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.green[100],
+                    color: isDark ? Colors.green[800] : Colors.green[100],
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     "Aujourd'hui",
                     style: TextStyle(
-                      color: Colors.green[800],
+                      color: isDark ? Colors.green[200] : Colors.green[800],
                       fontWeight: FontWeight.w500,
                       fontSize: 12,
                     ),
@@ -604,17 +691,17 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
 
           const SizedBox(height: 16),
 
-          _buildInfoRow(Icons.access_time, event.horaire, Colors.blue),
+          _buildInfoRow(Icons.access_time, event.horaire, isDark ? Colors.blue[300]! : Colors.blue, isDark),
           const SizedBox(height: 8),
-          _buildInfoRow(Icons.location_on, event.poste, Colors.red),
+          _buildInfoRow(Icons.location_on, event.poste, isDark ? Colors.red[300]! : Colors.red, isDark),
           const SizedBox(height: 8),
-          _buildInfoRow(Icons.task_alt, event.taches, Colors.green),
+          _buildInfoRow(Icons.task_alt, event.taches, isDark ? Colors.green[300]! : Colors.green, isDark),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text, Color color) {
+  Widget _buildInfoRow(IconData icon, String text, Color color, bool isDark) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -623,8 +710,8 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              color: Colors.black87,
+            style: TextStyle(
+              color: isDark ? Colors.grey[200] : Colors.black87,
               fontSize: 14,
             ),
           ),
@@ -651,7 +738,6 @@ class WorkEvent {
 
   WorkEvent(this.date, this.horaire, this.poste, this.taches);
 
-  // Conversion vers JSON pour la sauvegarde
   Map<String, dynamic> toJson() {
     return {
       'date': date,
@@ -661,7 +747,6 @@ class WorkEvent {
     };
   }
 
-  // Création depuis JSON pour le chargement
   factory WorkEvent.fromJson(Map<String, dynamic> json) {
     return WorkEvent(
       json['date'] as String,

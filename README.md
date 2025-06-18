@@ -1,6 +1,6 @@
 # Planning de Travail 📅
 
-Une application Flutter moderne pour gérer et visualiser vos plannings de travail hebdomadaires avec persistance automatique des données.
+Une application Flutter moderne pour gérer et visualiser vos plannings de travail hebdomadaires avec persistance automatique des données et mode sombre.
 
 ## ✨ Fonctionnalités
 
@@ -11,6 +11,7 @@ Une application Flutter moderne pour gérer et visualiser vos plannings de trava
 - 🔄 **Navigation** entre les semaines
 - 🎯 **Bouton "Aujourd'hui"** pour revenir rapidement à la semaine courante
 - 🔄 **Bouton réinitialiser** pour revenir aux données d'exemple
+- 🌙 **Mode sombre** avec basculement automatique et persistance
 - 🇫🇷 **Support français** complet
 - 🎨 **Design moderne** et responsive
 - 📊 **Indicateurs visuels** (semaine actuelle, nombre d'événements)
@@ -18,6 +19,7 @@ Une application Flutter moderne pour gérer et visualiser vos plannings de trava
 ## 📱 Captures d'écran
 
 ![Interface principale](screenshots/main_screen.png)
+![Mode sombre](screenshots/dark_mode.png)
 ![Import CSV](screenshots/csv_import.png)
 
 ## 🚀 Installation
@@ -101,7 +103,7 @@ work-schedule-app/
 ```
 
 ### Structure du code
-- **WorkScheduleApp** : Widget principal de l'application
+- **WorkScheduleApp** : Widget principal de l'application avec gestion des thèmes
 - **WorkScheduleHomePage** : Page d'accueil avec navigation et persistance
 - **WorkEvent** : Modèle de données pour les événements (avec sérialisation JSON)
 - **Parser CSV** : Logique d'import et traitement des fichiers
@@ -119,12 +121,22 @@ work-schedule-app/
 
 ### Interface utilisateur
 - Design Material 3 moderne
-- Animations fluides
+- **Mode sombre/clair** avec basculement fluide
+- **Persistance du thème** choisi par l'utilisateur
+- Animations fluides et transitions élégantes
 - **Navigation intuitive** avec boutons dédiés
 - **Bouton "Aujourd'hui"** pour navigation rapide
 - **Bouton réinitialiser** avec confirmation
-- Responsive design
+- Responsive design adaptatif
 - **Indicateurs visuels** (semaine actuelle, compteur d'événements)
+
+### Mode sombre 🌙
+- **Basculement instantané** avec bouton discret dans le header
+- **Couleurs adaptatives** pour une expérience optimale
+- **Persistance automatique** de la préférence utilisateur
+- **Dégradés personnalisés** pour chaque mode
+- **Contrastes optimisés** pour la lisibilité
+- **Icônes animées** pour le feedback visuel
 
 ### Gestion des semaines
 - Détection automatique de la semaine courante
@@ -137,6 +149,7 @@ work-schedule-app/
 ### Persistance des données
 - **Sauvegarde locale** sécurisée avec SharedPreferences
 - **Rechargement automatique** du dernier planning au démarrage
+- **Sauvegarde des préférences** (thème, paramètres)
 - **Gestion des erreurs** avec fallback vers les données d'exemple
 - **Option de réinitialisation** avec dialogue de confirmation
 
@@ -145,13 +158,14 @@ work-schedule-app/
 - [ ] Export des plannings modifiés
 - [ ] Édition des événements dans l'app
 - [ ] Notifications pour les événements
-- [ ] Thème sombre
+- [x] ~~Thème sombre~~ ✅ **Implémenté**
 - [ ] Synchronisation cloud
 - [ ] Support multi-langues
 - [ ] Statistiques de travail
 - [ ] Backup/restore des plannings
 - [ ] Import depuis Google Calendar
 - [ ] Mode hors ligne complet
+- [ ] Personnalisation des couleurs
 
 ## 🧪 Tests
 
@@ -189,16 +203,28 @@ flutter build ios --release
 1. L'application démarre avec des **données d'exemple** pour tester l'interface
 2. Utilisez le bouton **"Importer CSV"** pour charger votre planning
 3. Les données sont **automatiquement sauvegardées** localement
+4. Votre **préférence de thème** est également sauvegardée
 
 ### Navigation
 - **Flèches gauche/droite** : Naviguer entre les semaines
 - **Bouton "Aujourd'hui"** : Revenir rapidement à la semaine courante
 - **Bouton reset (🔄)** : Réinitialiser avec les données d'exemple
+- **Bouton thème (🌙/☀️)** : Basculer entre mode clair et sombre
 
 ### Gestion des données
 - **Sauvegarde automatique** : Vos données sont préservées entre les sessions
 - **Pas de connexion requise** : Tout fonctionne en mode hors ligne
 - **Réinitialisation** : Possibilité de revenir aux données d'exemple
+- **Persistance du thème** : Votre choix clair/sombre est mémorisé
+
+## 🌙 Mode sombre
+
+Le mode sombre offre :
+- **Confort visuel** réduit la fatigue oculaire
+- **Économie de batterie** sur écrans OLED
+- **Élégance moderne** avec des dégradés sombres
+- **Basculement instantané** sans redémarrage
+- **Adaptation intelligente** de tous les éléments UI
 
 ## 🤝 Contribution
 
@@ -216,6 +242,7 @@ Les contributions sont les bienvenues ! Pour contribuer :
 - Mettez à jour la documentation si nécessaire
 - Testez la persistance des données
 - Vérifiez la compatibilité Android/iOS
+- **Testez les deux modes** (clair et sombre)
 
 ## 🐛 Signaler un bug
 
@@ -223,6 +250,7 @@ Si vous trouvez un bug, n'hésitez pas à [ouvrir une issue](https://github.com/
 - Description détaillée du problème
 - Étapes pour reproduire
 - Captures d'écran si applicable
+- **Mode utilisé** (clair/sombre)
 - Informations sur l'environnement (OS, version Flutter, etc.)
 - **Préciser si le bug concerne la persistance des données**
 
@@ -242,6 +270,11 @@ Si vous trouvez un bug, n'hésitez pas à [ouvrir une issue](https://github.com/
 **Navigation bloquée :**
 - Utilisez le bouton "Aujourd'hui" pour revenir à la semaine courante
 - Réinitialisez avec le bouton reset si nécessaire
+
+**Problème de thème :**
+- Le mode sombre se sauvegarde automatiquement
+- Redémarrez l'app si le thème ne se charge pas correctement
+- Vérifiez que SharedPreferences fonctionne sur votre appareil
 
 ## 📄 Licence
 
@@ -265,4 +298,4 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de 
 
 Développé avec ❤️ en Flutter par [Jynra](https://github.com/Jynra)
 
-**Version actuelle : 1.0.0** - Avec persistance automatique des données et navigation améliorée
+**Version actuelle : 1.1.0** - Avec mode sombre, persistance automatique des données et navigation améliorée
