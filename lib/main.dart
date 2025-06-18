@@ -779,7 +779,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
   }
 
   Widget _buildTimeSlotsSection(List<TimeSlot> timeSlots, bool isDark) {
-    // Affichage uniforme pour tous les créneaux (simples et multiples)
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -798,10 +797,7 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
           ],
         ),
         const SizedBox(height: 8),
-        ...timeSlots.asMap().entries.map((entry) {
-          int index = entry.key;
-          TimeSlot slot = entry.value;
-
+        ...timeSlots.map((slot) {
           return Container(
             margin: EdgeInsets.only(left: 28, bottom: timeSlots.length == 1 ? 0 : 4),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -840,24 +836,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                     ),
                   ),
                 ),
-                // Indicateur de pause entre créneaux (seulement pour multiples)
-                if (timeSlots.length > 1 && index < timeSlots.length - 1 && !timeSlots[index + 1].isRest)
-                  Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.orange[800] : Colors.orange[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'pause',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isDark ? Colors.orange[200] : Colors.orange[700],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
               ],
             ),
           );
@@ -1000,7 +978,7 @@ class WorkEvent {
   // Valider un créneau horaire
   static bool _isValidTimeRange(String timeRange) {
     RegExp timePattern = RegExp(r'^\d{1,2}:\d{2}-\d{1,2}:\d{2}');
-        return timePattern.hasMatch(timeRange.trim());
+    return timePattern.hasMatch(timeRange.trim());
   }
 
   // Factory pour créer depuis CSV avec parsing automatique
@@ -1037,7 +1015,7 @@ class WorkEvent {
   }
 }
 
-// Nouvelle classe pour représenter un créneau horaire
+// Classe pour représenter un créneau horaire
 class TimeSlot {
   final String timeRange;
   final bool isRest;
@@ -1054,7 +1032,7 @@ class TimeSlot {
         DateTime start = _parseTime(parts[0].trim());
         DateTime end = _parseTime(parts[1].trim());
 
-        // Gestion des horaires de nuit (ex: 15:00-00:00)
+        // Gestion des horaires de nuit (ex: 22:00-06:00)
         if (end.isBefore(start)) {
           // Ajouter 24h à l'heure de fin
           end = end.add(const Duration(days: 1));

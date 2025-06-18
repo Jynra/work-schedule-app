@@ -18,6 +18,7 @@ Une application Flutter moderne pour gérer et visualiser vos plannings de trava
 - 🎨 **Design moderne** et responsive
 - 📊 **Indicateurs visuels** (semaine actuelle, badges créneaux multiples)
 - ⏱️ **Calcul automatique** du temps total travaillé par jour
+- 🧹 **Interface épurée** sans indicateurs de pause superflus
 
 ## 📱 Captures d'écran
 
@@ -133,7 +134,7 @@ work-schedule-app/
 - **WorkScheduleApp** : Widget principal de l'application avec gestion des thèmes
 - **WorkScheduleHomePage** : Page d'accueil avec navigation et persistance
 - **WorkEvent** : Modèle de données pour les événements (avec sérialisation JSON et horaires multiples)
-- **TimeSlot** : 🆕 Nouvelle classe pour gérer les créneaux horaires individuels
+- **TimeSlot** : 🆕 Classe pour gérer les créneaux horaires individuels
 - **Parser CSV** : Logique d'import et traitement des fichiers avec détection automatique des horaires multiples
 - **Persistance** : Sauvegarde/chargement automatique avec SharedPreferences
 
@@ -143,8 +144,8 @@ work-schedule-app/
 - **Détection automatique** des créneaux multiples dans une journée
 - **Parsing intelligent** avec support de 5 séparateurs différents
 - **Calcul automatique** du temps total travaillé
-- **Interface adaptée** avec badges et indicateurs visuels
-- **Gestion des pauses** entre créneaux
+- **Interface épurée** avec badges visuels pour identifier les journées multiples
+- **Affichage séquentiel** des créneaux sans indicateurs de pause
 - **Horaires de nuit** calculés correctement (ex: 22:00-06:00 = 8h)
 
 ### Import CSV et persistance
@@ -159,8 +160,9 @@ work-schedule-app/
 ### Interface utilisateur
 - Design Material 3 moderne
 - **Affichage uniforme** pour créneaux simples et multiples
-- **Badges visuels** pour les journées avec horaires multiples
+- **Badges visuels** discrets pour les journées avec horaires multiples
 - **Calcul du temps total** affiché pour chaque jour
+- **Interface épurée** sans éléments superflus
 - **Mode sombre/clair** avec basculement fluide
 - **Persistance du thème** choisi par l'utilisateur
 - Animations fluides et transitions élégantes
@@ -199,6 +201,7 @@ work-schedule-app/
 - [ ] Notifications pour les événements
 - [x] ~~Thème sombre~~ ✅ **Implémenté**
 - [x] ~~Horaires multiples~~ ✅ **Implémenté**
+- [x] ~~Interface épurée~~ ✅ **Implémenté**
 - [ ] Synchronisation cloud
 - [ ] Support multi-langues
 - [ ] Statistiques de travail avancées
@@ -256,9 +259,9 @@ flutter build ios --release
 ### **Gestion des horaires multiples** 🆕
 - **Détection automatique** lors de l'import CSV
 - **Affichage en créneaux** séparés avec durées individuelles
-- **Badge orange** indiquant le nombre de créneaux
+- **Badge orange** indiquant le nombre de créneaux pour identification rapide
 - **Calcul du temps total** affiché en bas de chaque jour
-- **Indicateurs de pause** entre les créneaux
+- **Interface épurée** sans indicateurs de pause entre créneaux
 
 ### Gestion des données
 - **Sauvegarde automatique** : Vos données sont préservées entre les sessions
@@ -274,6 +277,20 @@ Le mode sombre offre :
 - **Élégance moderne** avec des dégradés sombres
 - **Basculement instantané** sans redémarrage
 - **Adaptation intelligente** de tous les éléments UI
+
+## 🎨 Design et UX
+
+### Principes de design
+- **Minimalisme** : Interface épurée sans éléments superflus
+- **Clarté** : Information visible d'un coup d'œil
+- **Cohérence** : Comportement uniforme dans toute l'application
+- **Accessibilité** : Contrastes adaptés pour tous les utilisateurs
+
+### Améliorations récentes
+- ✅ Suppression des badges "pause" pour une interface plus épurée
+- ✅ Affichage séquentiel des créneaux multiples
+- ✅ Badges discrets pour identifier les journées à horaires multiples
+- ✅ Calculs automatiques des temps totaux
 
 ## 🤝 Contribution
 
@@ -293,6 +310,7 @@ Les contributions sont les bienvenues ! Pour contribuer :
 - Vérifiez la compatibilité Android/iOS
 - **Testez les deux modes** (clair et sombre)
 - **Testez les horaires multiples** avec différents séparateurs
+- **Privilégiez la simplicité** dans l'interface utilisateur
 
 ## 🐛 Signaler un bug
 
@@ -360,4 +378,4 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de 
 
 Développé avec ❤️ en Flutter par [Jynra](https://github.com/Jynra)
 
-**Version actuelle : 1.2.0** - Avec horaires multiples, mode sombre, persistance automatique des données et navigation améliorée
+**Version actuelle : 1.3.0** - Interface épurée, horaires multiples optimisés, mode sombre et persistance automatique des données
