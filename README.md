@@ -1,11 +1,13 @@
 # Planning de Travail 📅
 
-Une application Flutter moderne pour gérer et visualiser vos plannings de travail hebdomadaires avec persistance automatique des données et mode sombre.
+Une application Flutter moderne pour gérer et visualiser vos plannings de travail hebdomadaires avec persistance automatique des données, mode sombre et **support des horaires multiples**.
 
 ## ✨ Fonctionnalités
 
 - 📱 **Interface mobile native** (Android/iOS)
 - 📊 **Import CSV** pour charger vos plannings
+- ⏰ **Horaires multiples** dans la même journée (ex: 08:00-12:00 | 14:00-18:00)
+- 🌙 **Horaires de nuit** gérés automatiquement (ex: 22:00-06:00)
 - 💾 **Sauvegarde automatique** du dernier planning importé
 - 📅 **Vue hebdomadaire** du lundi au dimanche
 - 🔄 **Navigation** entre les semaines
@@ -14,13 +16,15 @@ Une application Flutter moderne pour gérer et visualiser vos plannings de trava
 - 🌙 **Mode sombre** avec basculement automatique et persistance
 - 🇫🇷 **Support français** complet
 - 🎨 **Design moderne** et responsive
-- 📊 **Indicateurs visuels** (semaine actuelle, nombre d'événements)
+- 📊 **Indicateurs visuels** (semaine actuelle, badges créneaux multiples)
+- ⏱️ **Calcul automatique** du temps total travaillé par jour
 
 ## 📱 Captures d'écran
 
 ![Interface principale](screenshots/main_screen.png)
 ![Mode sombre](screenshots/dark_mode.png)
 ![Import CSV](screenshots/csv_import.png)
+![Horaires multiples](screenshots/multiple_schedules.png)
 
 ## 🚀 Installation
 
@@ -49,8 +53,9 @@ flutter run
 
 ## 📋 Format CSV
 
-L'application accepte les fichiers CSV avec ce format :
+L'application accepte les fichiers CSV avec ce format, **incluant les horaires multiples** :
 
+### Format standard
 ```csv
 date,horaire,poste,taches
 2025-06-30,08:00-16:00,Bureau,Réunion équipe
@@ -58,25 +63,47 @@ date,horaire,poste,taches
 2025-07-02,Repos,Congé,Jour de repos
 ```
 
+### **Nouveauté : Horaires multiples** 🆕
+```csv
+date,horaire,poste,taches
+2025-06-30,"08:00-12:00 | 14:00-18:00",Bureau Principal,"Matin: réunions, après-midi: formation"
+2025-07-01,10:00-15:00 puis 18:00-22:00,Site A,Supervision jour et nuit
+2025-07-02,09:00-13:00 / 15:00-17:00,Site B,Double vacation
+2025-07-03,22:00-06:00,Site C,Équipe de nuit (8h)
+2025-07-04,Repos,Congé,Jour de repos
+```
+
+### **Séparateurs supportés pour horaires multiples :**
+- `|` : `08:00-12:00 | 14:00-18:00`
+- `puis` : `10:00-15:00 puis 18:00-22:00`
+- `/` : `09:00-13:00 / 15:00-17:00`
+- `+` : `08:00-12:00 + 14:00-18:00`
+- `et` : `09:00-13:00 et 15:00-17:00`
+
 ### Colonnes supportées :
 - **date** : Format YYYY-MM-DD
-- **horaire** : Plage horaire ou "Repos"
+- **horaire** : Plage horaire simple, multiple ou "Repos"
 - **poste** : Lieu de travail
 - **taches** : Description des activités
 
-## 📂 Fichier CSV de test
+## 📂 Fichier CSV de test complet
 
-Un fichier de test complet pour juin 2025 est disponible :
+Un fichier de test avec horaires multiples pour juin 2025 :
 
 ```csv
 date,horaire,poste,taches
-2025-06-01,Repos,Congé,Jour de repos - Dimanche
-2025-06-02,08:00-16:00,Bureau Principal,Réunion équipe hebdomadaire - Planning projets
-2025-06-03,09:00-17:00,Site A,Formation sécurité - Supervision équipe
-...
+2025-06-16,"08:00-12:00 | 14:00-18:00",Bureau Principal,"Réunion matin, formation après-midi"
+2025-06-17,09:00-17:00,Site A,Formation continue
+2025-06-18,08:30-12:30 puis 14:00-16:30,Bureau Principal,"Planification matin, suivi projets après-midi"
+2025-06-19,10:00-15:00 / 18:00-22:00,Site B,"Contrôle qualité jour, audit nuit"
+2025-06-20,08:00-16:00,Bureau Principal,Réunions clients
+2025-06-21,09:00-13:00,Domicile,Travail à distance
+2025-06-22,Repos,Congé,Jour de repos
+2025-06-23,22:00-06:00,Site C,Équipe de nuit (8h)
+2025-06-24,07:00-11:00 + 13:00-17:00,Site A,Double vacation
 ```
 
-*Utilisez ce format pour créer vos propres plannings ou testez l'application avec les données d'exemple intégrées.*
+*L'application détecte automatiquement les horaires multiples et affiche le temps total travaillé.*
 
 ## 🛠️ Technologies utilisées
 
@@ -105,22 +132,35 @@ work-schedule-app/
 ### Structure du code
 - **WorkScheduleApp** : Widget principal de l'application avec gestion des thèmes
 - **WorkScheduleHomePage** : Page d'accueil avec navigation et persistance
-- **WorkEvent** : Modèle de données pour les événements (avec sérialisation JSON)
-- **Parser CSV** : Logique d'import et traitement des fichiers
+- **WorkEvent** : Modèle de données pour les événements (avec sérialisation JSON et horaires multiples)
+- **TimeSlot** : 🆕 Nouvelle classe pour gérer les créneaux horaires individuels
+- **Parser CSV** : Logique d'import et traitement des fichiers avec détection automatique des horaires multiples
 - **Persistance** : Sauvegarde/chargement automatique avec SharedPreferences
 
 ## 🎯 Fonctionnalités détaillées
 
+### **⏰ Gestion des horaires multiples** 🆕
+- **Détection automatique** des créneaux multiples dans une journée
+- **Parsing intelligent** avec support de 5 séparateurs différents
+- **Calcul automatique** du temps total travaillé
+- **Interface adaptée** avec badges et indicateurs visuels
+- **Gestion des pauses** entre créneaux
+- **Horaires de nuit** calculés correctement (ex: 22:00-06:00 = 8h)
+
 ### Import CSV et persistance
 - Parsing automatique des fichiers CSV
+- **Support des horaires multiples** avec détection automatique
 - **Sauvegarde automatique** après chaque import
 - **Rechargement automatique** au démarrage de l'application
-- Support des différents encodages
-- Validation des données
+- Support des différents encodages et guillemets
+- Validation des données avec avertissements détaillés
 - Messages d'erreur informatifs
 
 ### Interface utilisateur
 - Design Material 3 moderne
+- **Affichage uniforme** pour créneaux simples et multiples
+- **Badges visuels** pour les journées avec horaires multiples
+- **Calcul du temps total** affiché pour chaque jour
 - **Mode sombre/clair** avec basculement fluide
 - **Persistance du thème** choisi par l'utilisateur
 - Animations fluides et transitions élégantes
@@ -128,7 +168,6 @@ work-schedule-app/
 - **Bouton "Aujourd'hui"** pour navigation rapide
 - **Bouton réinitialiser** avec confirmation
 - Responsive design adaptatif
-- **Indicateurs visuels** (semaine actuelle, compteur d'événements)
 
 ### Mode sombre 🌙
 - **Basculement instantané** avec bouton discret dans le header
@@ -159,13 +198,16 @@ work-schedule-app/
 - [ ] Édition des événements dans l'app
 - [ ] Notifications pour les événements
 - [x] ~~Thème sombre~~ ✅ **Implémenté**
+- [x] ~~Horaires multiples~~ ✅ **Implémenté**
 - [ ] Synchronisation cloud
 - [ ] Support multi-langues
-- [ ] Statistiques de travail
+- [ ] Statistiques de travail avancées
 - [ ] Backup/restore des plannings
 - [ ] Import depuis Google Calendar
 - [ ] Mode hors ligne complet
 - [ ] Personnalisation des couleurs
+- [ ] Graphiques de temps de travail
+- [ ] Export PDF des plannings
 
 ## 🧪 Tests
 
@@ -200,7 +242,7 @@ flutter build ios --release
 ## 📱 Utilisation
 
 ### Premier lancement
-1. L'application démarre avec des **données d'exemple** pour tester l'interface
+1. L'application démarre avec des **données d'exemple** incluant des horaires multiples
 2. Utilisez le bouton **"Importer CSV"** pour charger votre planning
 3. Les données sont **automatiquement sauvegardées** localement
 4. Votre **préférence de thème** est également sauvegardée
@@ -210,6 +252,13 @@ flutter build ios --release
 - **Bouton "Aujourd'hui"** : Revenir rapidement à la semaine courante
 - **Bouton reset (🔄)** : Réinitialiser avec les données d'exemple
 - **Bouton thème (🌙/☀️)** : Basculer entre mode clair et sombre
+
+### **Gestion des horaires multiples** 🆕
+- **Détection automatique** lors de l'import CSV
+- **Affichage en créneaux** séparés avec durées individuelles
+- **Badge orange** indiquant le nombre de créneaux
+- **Calcul du temps total** affiché en bas de chaque jour
+- **Indicateurs de pause** entre les créneaux
 
 ### Gestion des données
 - **Sauvegarde automatique** : Vos données sont préservées entre les sessions
@@ -243,6 +292,7 @@ Les contributions sont les bienvenues ! Pour contribuer :
 - Testez la persistance des données
 - Vérifiez la compatibilité Android/iOS
 - **Testez les deux modes** (clair et sombre)
+- **Testez les horaires multiples** avec différents séparateurs
 
 ## 🐛 Signaler un bug
 
@@ -251,6 +301,7 @@ Si vous trouvez un bug, n'hésitez pas à [ouvrir une issue](https://github.com/
 - Étapes pour reproduire
 - Captures d'écran si applicable
 - **Mode utilisé** (clair/sombre)
+- **Type d'horaires** (simple/multiple)
 - Informations sur l'environnement (OS, version Flutter, etc.)
 - **Préciser si le bug concerne la persistance des données**
 
@@ -266,6 +317,17 @@ Si vous trouvez un bug, n'hésitez pas à [ouvrir une issue](https://github.com/
 - Vérifiez le format du fichier (virgules comme séparateurs)
 - Assurez-vous que les en-têtes sont corrects : `date,horaire,poste,taches`
 - Utilisez le format de date YYYY-MM-DD
+- **Nouveauté** : Encadrez les horaires multiples avec des guillemets si nécessaire
+
+**Horaires multiples non détectés :**
+- Utilisez un des séparateurs supportés : `|`, `puis`, `/`, `+`, `et`
+- Vérifiez le format des heures : `HH:MM-HH:MM`
+- Exemple correct : `08:00-12:00 | 14:00-18:00`
+
+**Calculs d'heures incorrects :**
+- L'application gère automatiquement les horaires de nuit
+- Exemple : `22:00-06:00` = 8h (pas -16h)
+- Vérifiez la console pour les messages de débogage
 
 **Navigation bloquée :**
 - Utilisez le bouton "Aujourd'hui" pour revenir à la semaine courante
@@ -298,4 +360,4 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de 
 
 Développé avec ❤️ en Flutter par [Jynra](https://github.com/Jynra)
 
-**Version actuelle : 1.1.0** - Avec mode sombre, persistance automatique des données et navigation améliorée
+**Version actuelle : 1.2.0** - Avec horaires multiples, mode sombre, persistance automatique des données et navigation améliorée

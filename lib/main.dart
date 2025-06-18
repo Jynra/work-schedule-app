@@ -28,7 +28,6 @@ class _WorkScheduleAppState extends State<WorkScheduleApp> {
     _loadThemeMode();
   }
 
-  // Charger le mode thème sauvegardé
   Future<void> _loadThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
     final isDark = prefs.getBool('is_dark_mode') ?? false;
@@ -37,13 +36,11 @@ class _WorkScheduleAppState extends State<WorkScheduleApp> {
     });
   }
 
-  // Sauvegarder le mode thème
   Future<void> _saveThemeMode(bool isDark) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_dark_mode', isDark);
   }
 
-  // Basculer entre mode clair et sombre
   void _toggleTheme() {
     final isDark = _themeMode == ThemeMode.dark;
     setState(() {
@@ -108,7 +105,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
     _loadSavedData();
   }
 
-  // Charger les données sauvegardées ou les données d'exemple
   Future<void> _loadSavedData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -135,7 +131,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
     }
   }
 
-  // Sauvegarder les données
   Future<void> _saveData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -147,7 +142,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
     }
   }
 
-  // Effacer les données sauvegardées
   Future<void> _clearSavedData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -160,20 +154,20 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
 
   void _loadSampleData() {
     final sampleData = [
-      WorkEvent('2025-06-16', '08:00-16:00', 'Bureau Principal', 'Réunion équipe, Rapports'),
-      WorkEvent('2025-06-17', '09:00-17:00', 'Site A', 'Formation, Supervision'),
-      WorkEvent('2025-06-18', '08:30-16:30', 'Bureau Principal', 'Planification, Suivi projets'),
-      WorkEvent('2025-06-19', '10:00-18:00', 'Site B', 'Contrôle qualité, Audit'),
-      WorkEvent('2025-06-20', '08:00-16:00', 'Bureau Principal', 'Réunions clients, Documentation'),
-      WorkEvent('2025-06-21', '09:00-13:00', 'Domicile', 'Travail à distance, Rapports'),
-      WorkEvent('2025-06-22', 'Repos', 'Congé', 'Jour de repos'),
-      WorkEvent('2025-06-23', '09:00-17:00', 'Site A', 'Maintenance, Inspection'),
-      WorkEvent('2025-06-24', '08:00-16:00', 'Bureau Principal', 'Analyse données, Présentation'),
-      WorkEvent('2025-06-25', '14:00-22:00', 'Site C', 'Équipe de nuit, Surveillance'),
-      WorkEvent('2025-06-26', '08:30-16:30', 'Bureau Principal', 'Formation nouveaux employés'),
-      WorkEvent('2025-06-27', '07:00-15:00', 'Site A', 'Ouverture, Coordination équipes'),
-      WorkEvent('2025-06-28', '10:00-14:00', 'Site B', 'Maintenance weekend, Garde'),
-      WorkEvent('2025-06-29', 'Repos', 'Congé', 'Jour de repos'),
+      WorkEvent.fromCsv('2025-06-16', '08:00-12:00 | 14:00-18:00', 'Bureau Principal', 'Réunion matin, formation après-midi'),
+      WorkEvent.fromCsv('2025-06-17', '09:00-17:00', 'Site A', 'Formation, Supervision'),
+      WorkEvent.fromCsv('2025-06-18', '08:30-12:30 puis 14:00-16:30', 'Bureau Principal', 'Planification matin, suivi projets après-midi'),
+      WorkEvent.fromCsv('2025-06-19', '10:00-15:00 / 18:00-22:00', 'Site B', 'Contrôle qualité jour, audit nuit'),
+      WorkEvent.fromCsv('2025-06-20', '08:00-16:00', 'Bureau Principal', 'Réunions clients, Documentation'),
+      WorkEvent.fromCsv('2025-06-21', '09:00-13:00', 'Domicile', 'Travail à distance, Rapports'),
+      WorkEvent.fromCsv('2025-06-22', 'Repos', 'Congé', 'Jour de repos'),
+      WorkEvent.fromCsv('2025-06-23', '09:00-17:00', 'Site A', 'Maintenance, Inspection'),
+      WorkEvent.fromCsv('2025-06-24', '08:00-16:00', 'Bureau Principal', 'Analyse données, Présentation'),
+      WorkEvent.fromCsv('2025-06-25', '14:00-22:00', 'Site C', 'Équipe de nuit, Surveillance'),
+      WorkEvent.fromCsv('2025-06-26', '08:30-16:30', 'Bureau Principal', 'Formation nouveaux employés'),
+      WorkEvent.fromCsv('2025-06-27', '07:00-15:00', 'Site A', 'Ouverture, Coordination équipes'),
+      WorkEvent.fromCsv('2025-06-28', '10:00-14:00', 'Site B', 'Maintenance weekend, Garde'),
+      WorkEvent.fromCsv('2025-06-29', 'Repos', 'Congé', 'Jour de repos'),
     ];
 
     setState(() {
@@ -299,21 +293,36 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
         List<String> headers = lines[0].split(',').map((h) => h.trim().toLowerCase()).toList();
 
         List<WorkEvent> events = [];
+        List<String> parseWarnings = [];
+
         for (int i = 1; i < lines.length; i++) {
           String line = lines[i].trim();
           if (line.isEmpty) continue;
 
-          List<String> values = line.split(',').map((v) => v.trim()).toList();
+          List<String> values = _parseCSVLine(line);
 
           if (values.length >= 4) {
-            String date = values[0];
-            String horaire = values[1];
-            String poste = values[2];
-            String taches = values[3];
+            String date = values[0].trim();
+            String horaire = values[1].trim();
+            String poste = values[2].trim();
+            String taches = values[3].trim();
 
             if (date.isNotEmpty && date != 'date') {
-              events.add(WorkEvent(date, horaire, poste, taches));
+              try {
+                WorkEvent event = WorkEvent.fromCsv(date, horaire, poste, taches);
+
+                if (event.hasMultipleTimeSlots) {
+                  print('✓ Horaire multiple détecté pour ${date}: ${event.timeSlots?.length} créneaux');
+                }
+
+                events.add(event);
+              } catch (e) {
+                parseWarnings.add('Ligne ${i + 1}: ${e.toString()}');
+                print('Warning parsing line ${i + 1}: $e');
+              }
             }
+          } else {
+            parseWarnings.add('Ligne ${i + 1}: Format invalide (${values.length} colonnes trouvées, 4 attendues)');
           }
         }
 
@@ -325,18 +334,65 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
         await _saveData();
 
         if (mounted) {
+          String message = '${events.length} événements chargés avec succès!';
+          int multipleSchedules = events.where((e) => e.hasMultipleTimeSlots).length;
+
+          if (multipleSchedules > 0) {
+            message += '\n$multipleSchedules journées avec horaires multiples détectées.';
+          }
+
+          if (parseWarnings.isNotEmpty && parseWarnings.length <= 3) {
+            message += '\n\nAvertissements:\n${parseWarnings.join('\n')}';
+          } else if (parseWarnings.length > 3) {
+            message += '\n\n${parseWarnings.length} avertissements (voir console)';
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${events.length} événements chargés avec succès!')),
+            SnackBar(
+              content: Text(message),
+              duration: Duration(seconds: parseWarnings.isNotEmpty ? 6 : 3),
+              behavior: SnackBarBehavior.floating,
+            ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors du chargement: $e')),
+          SnackBar(
+            content: Text('Erreur lors du chargement: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
+  }
+
+  List<String> _parseCSVLine(String line) {
+    List<String> result = [];
+    StringBuffer currentField = StringBuffer();
+    bool inQuotes = false;
+
+    for (int i = 0; i < line.length; i++) {
+      String char = line[i];
+
+      if (char == '"') {
+        if (i + 1 < line.length && line[i + 1] == '"') {
+          currentField.write('"');
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char == ',' && !inQuotes) {
+        result.add(currentField.toString());
+        currentField.clear();
+      } else {
+        currentField.write(char);
+      }
+    }
+
+    result.add(currentField.toString());
+    return result;
   }
 
   @override
@@ -374,10 +430,8 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                 ),
                 child: Column(
                   children: [
-                    // Titre centré avec bouton thème en coin
                     Stack(
                       children: [
-                        // Titre centré
                         Center(
                           child: Column(
                             children: [
@@ -398,7 +452,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                             ],
                           ),
                         ),
-                        // Bouton thème en haut à droite
                         Positioned(
                           top: 4,
                           right: 4,
@@ -430,7 +483,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
 
                     const SizedBox(height: 16),
 
-                    // Boutons d'actions
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -483,7 +535,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
 
                     const SizedBox(height: 16),
 
-                    // Navigation semaines
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -562,7 +613,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                 ),
               ),
 
-              // Contenu principal
               Expanded(
                 child: weeks.isNotEmpty && currentWeek < weeks.length
                     ? ListView.builder(
@@ -596,7 +646,6 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                 ),
               ),
 
-              // Footer avec informations
               if (weeks.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -627,6 +676,7 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
   Widget _buildEventCard(WorkEvent event, bool isDark) {
     DateTime date = DateTime.parse(event.date);
     bool isToday = DateFormat('yyyy-MM-dd').format(DateTime.now()) == event.date;
+    List<TimeSlot> timeSlots = event.parsedTimeSlots;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -646,6 +696,7 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header avec date et badge "Aujourd'hui"
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -670,28 +721,54 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                   ),
                 ],
               ),
-              if (isToday)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.green[800] : Colors.green[100],
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    "Aujourd'hui",
-                    style: TextStyle(
-                      color: isDark ? Colors.green[200] : Colors.green[800],
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (isToday)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.green[800] : Colors.green[100],
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        "Aujourd'hui",
+                        style: TextStyle(
+                          color: isDark ? Colors.green[200] : Colors.green[800],
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  // Badge pour horaires multiples
+                  if (event.hasMultipleTimeSlots) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.orange[800] : Colors.orange[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${timeSlots.length} créneaux',
+                        style: TextStyle(
+                          color: isDark ? Colors.orange[200] : Colors.orange[800],
+                          fontWeight: FontWeight.w500,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
 
           const SizedBox(height: 16),
 
-          _buildInfoRow(Icons.access_time, event.horaire, isDark ? Colors.blue[300]! : Colors.blue, isDark),
+          // Affichage des créneaux horaires
+          _buildTimeSlotsSection(timeSlots, isDark),
+
           const SizedBox(height: 8),
           _buildInfoRow(Icons.location_on, event.poste, isDark ? Colors.red[300]! : Colors.red, isDark),
           const SizedBox(height: 8),
@@ -699,6 +776,144 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
         ],
       ),
     );
+  }
+
+  Widget _buildTimeSlotsSection(List<TimeSlot> timeSlots, bool isDark) {
+    // Affichage uniforme pour tous les créneaux (simples et multiples)
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.access_time, size: 16, color: isDark ? Colors.blue[300] : Colors.blue),
+            const SizedBox(width: 12),
+            Text(
+              timeSlots.length == 1 ? 'Horaire :' : 'Horaires de la journée :',
+              style: TextStyle(
+                color: isDark ? Colors.grey[200] : Colors.black87,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...timeSlots.asMap().entries.map((entry) {
+          int index = entry.key;
+          TimeSlot slot = entry.value;
+
+          return Container(
+            margin: EdgeInsets.only(left: 28, bottom: timeSlots.length == 1 ? 0 : 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: slot.isRest
+                  ? (isDark ? Colors.grey[700] : Colors.grey[100])
+                  : (isDark ? Colors.blue[900]?.withValues(alpha: 0.3) : Colors.blue[50]),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: slot.isRest
+                    ? (isDark ? Colors.grey[600]! : Colors.grey[300]!)
+                    : (isDark ? Colors.blue[600]! : Colors.blue[200]!),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: slot.isRest
+                        ? (isDark ? Colors.grey[400] : Colors.grey[600])
+                        : (isDark ? Colors.blue[300] : Colors.blue[600]),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    slot.displayText,
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[200] : Colors.black87,
+                      fontSize: 14,
+                      fontWeight: slot.isRest ? FontWeight.normal : FontWeight.w600,
+                    ),
+                  ),
+                ),
+                // Indicateur de pause entre créneaux (seulement pour multiples)
+                if (timeSlots.length > 1 && index < timeSlots.length - 1 && !timeSlots[index + 1].isRest)
+                  Container(
+                    margin: const EdgeInsets.only(left: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.orange[800] : Colors.orange[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'pause',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDark ? Colors.orange[200] : Colors.orange[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }).toList(),
+
+        // Affichage du temps total travaillé (pour tous les créneaux)
+        if (timeSlots.any((slot) => !slot.isRest))
+          Container(
+            margin: EdgeInsets.only(
+                left: 28,
+                top: timeSlots.length == 1 ? 6 : 8
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.green[900]?.withValues(alpha: 0.3) : Colors.green[50],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDark ? Colors.green[700]! : Colors.green[200]!,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.timer,
+                  size: 14,
+                  color: isDark ? Colors.green[300] : Colors.green[700],
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Total: ${_calculateTotalHours(timeSlots)}h',
+                  style: TextStyle(
+                    color: isDark ? Colors.green[300] : Colors.green[700],
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _calculateTotalHours(List<TimeSlot> timeSlots) {
+    Duration totalDuration = Duration.zero;
+
+    for (TimeSlot slot in timeSlots) {
+      if (!slot.isRest && slot.duration != null) {
+        totalDuration += slot.duration!;
+      }
+    }
+
+    double hours = totalDuration.inMinutes / 60.0;
+    return hours.toStringAsFixed(1);
   }
 
   Widget _buildInfoRow(IconData icon, String text, Color color, bool isDark) {
@@ -735,8 +950,64 @@ class WorkEvent {
   final String horaire;
   final String poste;
   final String taches;
+  final List<TimeSlot>? timeSlots;
 
-  WorkEvent(this.date, this.horaire, this.poste, this.taches);
+  WorkEvent(this.date, this.horaire, this.poste, this.taches, {this.timeSlots});
+
+  // Getter pour savoir si c'est un horaire multiple
+  bool get hasMultipleTimeSlots => timeSlots != null && timeSlots!.length > 1;
+
+  // Getter pour récupérer les créneaux formatés
+  List<TimeSlot> get parsedTimeSlots {
+    if (timeSlots != null) return timeSlots!;
+    return _parseHoraire(horaire);
+  }
+
+  // Parser les horaires multiples
+  static List<TimeSlot> _parseHoraire(String horaire) {
+    List<TimeSlot> slots = [];
+
+    // Gestion du repos
+    if (horaire.toLowerCase().contains('repos')) {
+      slots.add(TimeSlot('Repos', true));
+      return slots;
+    }
+
+    // Séparateurs possibles: |, +, puis, et
+    List<String> separators = [' | ', ' + ', ' puis ', ' et ', ' / '];
+
+    for (String sep in separators) {
+      if (horaire.contains(sep)) {
+        List<String> parts = horaire.split(sep);
+        for (String part in parts) {
+          String trimmed = part.trim();
+          if (trimmed.isNotEmpty && _isValidTimeRange(trimmed)) {
+            slots.add(TimeSlot(trimmed, false));
+          }
+        }
+        return slots;
+      }
+    }
+
+    // Horaire simple
+    if (_isValidTimeRange(horaire)) {
+      slots.add(TimeSlot(horaire, false));
+    }
+
+    return slots;
+  }
+
+  // Valider un créneau horaire
+  static bool _isValidTimeRange(String timeRange) {
+    RegExp timePattern = RegExp(r'^\d{1,2}:\d{2}-\d{1,2}:\d{2}');
+        return timePattern.hasMatch(timeRange.trim());
+  }
+
+  // Factory pour créer depuis CSV avec parsing automatique
+  factory WorkEvent.fromCsv(String date, String horaire, String poste, String taches) {
+    List<TimeSlot> timeSlots = _parseHoraire(horaire);
+    return WorkEvent(date, horaire, poste, taches, timeSlots: timeSlots);
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -744,15 +1015,89 @@ class WorkEvent {
       'horaire': horaire,
       'poste': poste,
       'taches': taches,
+      'timeSlots': timeSlots?.map((slot) => slot.toJson()).toList(),
     };
   }
 
   factory WorkEvent.fromJson(Map<String, dynamic> json) {
+    List<TimeSlot>? slots;
+    if (json['timeSlots'] != null) {
+      slots = (json['timeSlots'] as List)
+          .map((slot) => TimeSlot.fromJson(slot))
+          .toList();
+    }
+
     return WorkEvent(
       json['date'] as String,
       json['horaire'] as String,
       json['poste'] as String,
       json['taches'] as String,
+      timeSlots: slots,
+    );
+  }
+}
+
+// Nouvelle classe pour représenter un créneau horaire
+class TimeSlot {
+  final String timeRange;
+  final bool isRest;
+
+  TimeSlot(this.timeRange, this.isRest);
+
+  // Calculer la durée du créneau
+  Duration? get duration {
+    if (isRest) return null;
+
+    try {
+      List<String> parts = timeRange.split('-');
+      if (parts.length == 2) {
+        DateTime start = _parseTime(parts[0].trim());
+        DateTime end = _parseTime(parts[1].trim());
+
+        // Gestion des horaires de nuit (ex: 15:00-00:00)
+        if (end.isBefore(start)) {
+          // Ajouter 24h à l'heure de fin
+          end = end.add(const Duration(days: 1));
+        }
+
+        return end.difference(start);
+      }
+    } catch (e) {
+      print('Error parsing time range: $timeRange');
+    }
+    return null;
+  }
+
+  DateTime _parseTime(String time) {
+    List<String> parts = time.split(':');
+    int hour = int.parse(parts[0]);
+    int minute = int.parse(parts[1]);
+    return DateTime(2024, 1, 1, hour, minute);
+  }
+
+  // Formater pour l'affichage
+  String get displayText {
+    if (isRest) return timeRange;
+
+    Duration? dur = duration;
+    if (dur != null) {
+      double hours = dur.inMinutes / 60.0;
+      return '$timeRange (${hours.toStringAsFixed(1)}h)';
+    }
+    return timeRange;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'timeRange': timeRange,
+      'isRest': isRest,
+    };
+  }
+
+  factory TimeSlot.fromJson(Map<String, dynamic> json) {
+    return TimeSlot(
+      json['timeRange'] as String,
+      json['isRest'] as bool,
     );
   }
 }
