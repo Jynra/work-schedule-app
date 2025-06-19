@@ -750,7 +750,7 @@ class _WorkScheduleHomePageState extends State<WorkScheduleHomePage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${timeSlots.length} créneaux',
+                        'Coupure',
                         style: TextStyle(
                           color: isDark ? Colors.orange[200] : Colors.orange[800],
                           fontWeight: FontWeight.w500,
